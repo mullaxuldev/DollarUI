@@ -83,11 +83,11 @@ local Theme = {
     WindowBg = Color3.fromRGB(24, 24, 27),       -- Чистый тёмный графит фона окна (#18181b)
     SidebarBg = Color3.fromRGB(20, 20, 22),      -- Сайдбар
     ContentBg = Color3.fromRGB(24, 24, 27),      -- Контент
-    CardFill = Color3.fromRGB(33, 33, 37),       -- Карточки секций: прям ненамного светлее фона (#212125)
+    CardFill = Color3.fromRGB(24, 24, 27),       -- Карточки секций ровно в цвет фона
     PillBarBg = Color3.fromRGB(28, 28, 32),      -- Капсула оружия (#1c1c20)
-    DropdownBg = Color3.fromRGB(22, 22, 25),     -- Внутренность селектора
-    PopupBg = Color3.fromRGB(24, 24, 27),        -- Всплывающий список
-    SearchBtnBg = Color3.fromRGB(30, 30, 34),    -- Кнопка лупы
+    DropdownBg = Color3.fromRGB(20, 20, 23),     -- Внутренность селектора
+    PopupBg = Color3.fromRGB(22, 22, 25),        -- Всплывающий список
+    SearchBtnBg = Color3.fromRGB(28, 28, 32),    -- Кнопка лупы
     StrokeOuter = Color3.fromRGB(52, 52, 58),    -- Мягкий внешний контур окна
     StrokeInner = Color3.fromRGB(56, 56, 64),    -- Тонкий контур карточек
     Divider = Color3.fromRGB(72, 72, 82),        -- Разделительные линии (светлее, четко видны)
@@ -1187,13 +1187,13 @@ local function addBottomLine(parent)
     return line
 end
 
--- СЕКЦИЯ-КАРТОЧКА: карточка прям ненамного светлее фона с аккуратным контуром и фаской
+-- СЕКЦИЯ-КАРТОЧКА: полупрозрачная карточка ровно в цвет фона окна
 local function createSectionCard(column, title)
     local cardWrapper = Instance.new("Frame")
     cardWrapper.Size = UDim2.new(1, 0, 0, 0)
     cardWrapper.AutomaticSize = Enum.AutomaticSize.Y
     cardWrapper.BackgroundColor3 = Theme.CardFill
-    cardWrapper.BackgroundTransparency = 0.05
+    cardWrapper.BackgroundTransparency = 0.45
     cardWrapper.LayoutOrder = nextOrder()
     cardWrapper.Parent = column
     addCorner(cardWrapper, 10)
