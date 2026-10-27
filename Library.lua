@@ -491,6 +491,8 @@ end
 function Library:SetToggleKey(keyCode)
     if typeof(keyCode) == "EnumItem" and keyCode.EnumType == Enum.KeyCode then
         toggleKey = keyCode
+    elseif type(keyCode) == "string" and Enum.KeyCode[keyCode] then
+        toggleKey = Enum.KeyCode[keyCode]
     end
 end
 
@@ -2094,7 +2096,8 @@ local function addColorPicker(section, labelText, defaultColor, isLast, callback
     local draggingHue = false
 
     local function updateSV(input)
-        local rel = (input.Position - svBox.AbsolutePosition) / svBox.AbsoluteSize
+        local inPos = Vector2.new(input.Position.X, input.Position.Y)
+        local rel = (inPos - svBox.AbsolutePosition) / svBox.AbsoluteSize
         s = math.clamp(rel.X, 0, 1)
         v = 1 - math.clamp(rel.Y, 0, 1)
         svThumb.Position = UDim2.new(s, 0, 1 - v, 0)
@@ -2102,7 +2105,8 @@ local function addColorPicker(section, labelText, defaultColor, isLast, callback
     end
 
     local function updateHue(input)
-        local rel = (input.Position - hueBox.AbsolutePosition) / hueBox.AbsoluteSize
+        local inPos = Vector2.new(input.Position.X, input.Position.Y)
+        local rel = (inPos - hueBox.AbsolutePosition) / hueBox.AbsoluteSize
         h = math.clamp(rel.X, 0, 0.999)
         syncHue()
         fire()
