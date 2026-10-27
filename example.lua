@@ -1,7 +1,7 @@
 -- DollarUI CS2 Neverlose-style UI Library Example
--- GitHub: https://github.com/oaniggggga/DollarUI
+-- GitHub: https://github.com/mullaxuldev/DollarUI
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/oaniggggga/DollarUI/main/Library.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/mullaxuldev/DollarUI/master/Library.lua"))()
 
 -- 1. СЕКЦИИ ДЛЯ ВКЛАДКИ RAGE
 local RageTab = Library:GetTab("rage")

@@ -2,7 +2,7 @@
 
 Pixel-perfect, high-performance **CS2 Neverlose-style** UI Library for Roblox.
 
-![CS2 Neverlose Style](https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/crosshair.svg)
+![CS2 Neverlose Style](https://raw.githubusercontent.com/lucide-icons/lucide/master/icons/crosshair.svg)
 
 ## Features
 - **CS2 Neverlose Aesthetics**: Authentic glass blur, Gotham typography, custom shaders and responsive cards.
@@ -16,7 +16,7 @@ Pixel-perfect, high-performance **CS2 Neverlose-style** UI Library for Roblox.
 ## Quick Start (Example)
 
 ```lua
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/oaniggggga/DollarUI/main/Library.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/mullaxuldev/DollarUI/master/Library.lua"))()
 
 -- Get category tab
 local RageTab = Library:GetTab("rage")
