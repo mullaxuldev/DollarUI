@@ -1,4 +1,4 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/mullaxuldev/DollarUI/master/Library.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/mullaxuldev/DollarUI/master/Library.lua?t=" .. tostring(os.time())))()
 
 -- Назначаем уникальную папку под наш хаб (чтобы конфиги разных игр/скриптов не смешивались)
 Library:SetConfigFolder("LoneSurvival_Configs")
