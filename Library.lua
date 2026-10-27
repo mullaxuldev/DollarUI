@@ -1199,13 +1199,13 @@ local function addBottomLine(parent)
     return line
 end
 
--- СЕКЦИЯ-КАРТОЧКА: 1 в 1 тон фона, прозрачность на 0.05 меньше (0.15)
+-- СЕКЦИЯ-КАРТОЧКА: 1 в 1 тон фона, прозрачность на 0.05 меньше чем само окно (0.08 - 0.05 = 0.03)
 local function createSectionCard(column, title)
     local cardWrapper = Instance.new("Frame")
     cardWrapper.Size = UDim2.new(1, 0, 0, 0)
     cardWrapper.AutomaticSize = Enum.AutomaticSize.Y
     cardWrapper.BackgroundColor3 = Theme.CardFill
-    cardWrapper.BackgroundTransparency = 0.15
+    cardWrapper.BackgroundTransparency = 0.03
     cardWrapper.LayoutOrder = nextOrder()
     cardWrapper.Parent = column
     addCorner(cardWrapper, 10)
