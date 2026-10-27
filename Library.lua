@@ -51,6 +51,12 @@ Env.PAPA = {
     end,
 }
 
+local function Cleanup()
+    if Env.PAPA and type(Env.PAPA.Unload) == "function" then
+        Env.PAPA.Unload()
+    end
+end
+
 -- На случай если остались старые хвосты без таблицы
 for _, parent in ipairs({ PlayerGui, CoreGui, Lighting, workspace.CurrentCamera }) do
     pcall(function()
@@ -526,6 +532,7 @@ local Library = {}
 Library.Registry = {}
 local currentTabId = "rage"
 local WeaponBar
+local ChevronBtn, ChevronIcon
 
 local function switchTab(targetId)
     currentTabId = targetId
@@ -713,7 +720,7 @@ ProfSub.TextColor3 = Theme.TextValues
 ProfSub.TextXAlignment = Enum.TextXAlignment.Left
 ProfSub.Parent = ProfileFrame
 
-local ChevronBtn = Instance.new("TextButton")
+ChevronBtn = Instance.new("TextButton")
 ChevronBtn.Size = UDim2.new(0, 24, 0, 24)
 ChevronBtn.Position = UDim2.new(1, -28, 0.5, -12)
 ChevronBtn.BackgroundColor3 = Theme.CardFill
@@ -723,7 +730,7 @@ ChevronBtn.AutoButtonColor = false
 ChevronBtn.Parent = ProfileFrame
 addCorner(ChevronBtn, 6)
 
-local ChevronIcon = createLucideIcon(ChevronBtn, "chevron-right", 16, Theme.TextGray)
+ChevronIcon = createLucideIcon(ChevronBtn, "chevron-right", 16, Theme.TextGray)
 ChevronIcon.Position = UDim2.new(0.5, -8, 0.5, -8)
 
 trackConn(ChevronBtn.MouseEnter:Connect(function()
@@ -1649,77 +1656,9 @@ local function addButton(section, labelText, buttonText, iconName, isLast, callb
         if callback then pcall(callback) end
     end))
 
-    local function setDropdown(val)
-        curVal = val
-        selLbl.Text = val
-        updateSelectedUI()
-        if callback then pcall(callback, val) end
-    end
-
-    local function refreshDropdown(newOpts, newDefault)
-        -- Очистка старых кнопок в попапе
-        for _, ch in ipairs(popup:GetChildren()) do
-            if ch:IsA("TextButton") then ch:Destroy() end
-        end
-        optRefs = {}
-        options = newOpts or {}
-        targetH = #options * 32 + 8
-        curVal = newDefault or options[1] or ""
-        selLbl.Text = curVal
-
-        for oIdx, opt in ipairs(options) do
-            local optBtn = Instance.new("TextButton")
-            optBtn.Size = UDim2.new(1, 0, 0, 30)
-            optBtn.BackgroundTransparency = 1
-            optBtn.Text = ""
-            optBtn.AutoButtonColor = false
-            optBtn.LayoutOrder = oIdx
-            optBtn.ZIndex = 251
-            optBtn.Parent = popup
-
-            local optLbl = Instance.new("TextLabel")
-            optLbl.RichText = true
-            optLbl.Size = UDim2.new(1, -26, 1, 0)
-            optLbl.Position = UDim2.new(0, 8, 0, 0)
-            optLbl.BackgroundTransparency = 1
-            optLbl.Text = opt
-            optLbl.TextSize = 14
-            optLbl.FontFace = Font.fromName("Montserrat", Enum.FontWeight.SemiBold)
-            optLbl.Font = Enum.Font.GothamBold
-            optLbl.TextXAlignment = Enum.TextXAlignment.Left
-            optLbl.ZIndex = 252
-            optLbl.Parent = optBtn
-
-            local checkMark = createLucideIcon(optBtn, "check", 14, Theme.Accent)
-            checkMark.Position = UDim2.new(1, -20, 0.5, -7)
-            checkMark.ZIndex = 252
-
-            table.insert(optRefs, { name = opt, lbl = optLbl, check = checkMark })
-
-            trackConn(optBtn.MouseButton1Click:Connect(function()
-                curVal = opt
-                selLbl.Text = opt
-                updateSelectedUI()
-                closeDropdown()
-                if callback then pcall(callback, opt) end
-            end))
-        end
-        updateSelectedUI()
-    end
-
-    if flag then
-        Library.Registry[flag] = {
-            Type = "Dropdown",
-            Get = function() return curVal end,
-            Set = setDropdown,
-            Refresh = refreshDropdown
-        }
-    end
-
     if not isLast then
         addBottomLine(row)
     end
-    return { Set = setDropdown, Refresh = refreshDropdown, Get = function() return curVal end }
 end
 
 --------------------------------------------------------------------------------
@@ -1938,6 +1877,15 @@ function Library:SetConfigsVisible(visible)
         ConfigsBtn.Visible = visible
     end
 end
+
+function Library:SetConfigFolder(folderName)
+    if folderName and folderName ~= "" then
+        Library.ConfigFolder = folderName
+        Library.AutoLoadFile = folderName .. "/autoload.txt"
+        ensureFolder()
+    end
+end
+
 
 function Library:GetTab(tabId)
     local page = TabPages[tabId] or createTabPage(tabId)

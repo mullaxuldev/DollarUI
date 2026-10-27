@@ -3,6 +3,9 @@
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/mullaxuldev/DollarUI/master/Library.lua"))()
 
+-- Назначаем уникальную папку под наш хаб (чтобы конфиги разных игр/скриптов не смешивались)
+Library:SetConfigFolder("LoneSurvival_Configs")
+
 -- 1. СЕКЦИИ ДЛЯ ВКЛАДКИ RAGE
 local RageTab = Library:GetTab("rage")
 
