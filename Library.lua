@@ -160,13 +160,18 @@ end
 local MainWindow = Instance.new("Frame")
 MainWindow.Name = "MainWindow"
 MainWindow.Size = UDim2.new(0, 860, 0, 560)
-MainWindow.Position = UDim2.new(0.5, -430, 0.5, -280)
+MainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainWindow.AnchorPoint = Vector2.new(0.5, 0.5)
 MainWindow.BackgroundColor3 = Theme.WindowBg
 MainWindow.BackgroundTransparency = 0.08
 MainWindow.BorderSizePixel = 0
 MainWindow.ClipsDescendants = false
 MainWindow.Parent = ScreenGui
 addCorner(MainWindow, 16)
+
+local WindowScale = Instance.new("UIScale")
+WindowScale.Scale = 1
+WindowScale.Parent = MainWindow
 
 -- Объемный внешний контур окна с эффектом преломления света на фаске (сверху ярче)
 local mainStroke = addStroke(MainWindow, Theme.StrokeOuter, 1.2, 0.1)
@@ -369,18 +374,78 @@ end))
 trackConn(UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
-        MainWindow.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        normalPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        MainWindow.Position = normalPos
     end
 end))
 
 local menuOpen = true
 local toggleKey = Enum.KeyCode.RightShift
+local isToggling = false
+local normalPos = UDim2.new(0.5, 0, 0.5, 0)
+local normalSize = UDim2.new(0, 860, 0, 560)
 
 local function setMenuVisible(vis)
-    menuOpen = vis
-    MainWindow.Visible = vis
-    if activePopup and not vis then
-        if activePopupClose then activePopupClose() else activePopup.Visible = false end
+    if isToggling then return end
+    if vis == menuOpen then return end
+    isToggling = true
+
+    if vis then
+        menuOpen = true
+        MainWindow.Visible = true
+        if DoF and DoF.Parent then
+            DoF.Enabled = true
+            DoF.NearIntensity = 0
+            TweenService:Create(DoF, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { NearIntensity = 1 }):Play()
+        end
+
+        -- Старт снизу экрана: сплюснута в горизонтальную полоску (как засасывает пылесос)
+        MainWindow.Position = UDim2.new(normalPos.X.Scale, normalPos.X.Offset, 1, 100)
+        MainWindow.Size = UDim2.new(0, 420, 0, 20)
+        WindowScale.Scale = 0.5
+
+        -- Эластичный вылет на центр экрана с восстановлением пропорций
+        local posTween = TweenService:Create(MainWindow, TweenInfo.new(0.42, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Position = normalPos,
+            Size = normalSize
+        })
+        local scaleTween = TweenService:Create(WindowScale, TweenInfo.new(0.38, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Scale = 1
+        })
+        posTween:Play()
+        scaleTween:Play()
+        posTween.Completed:Wait()
+        isToggling = false
+    else
+        menuOpen = false
+        if activePopup then
+            if activePopupClose then activePopupClose() else activePopup.Visible = false end
+        end
+
+        -- Плавное незаметное угасание блюра
+        if DoF and DoF.Parent then
+            TweenService:Create(DoF, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { NearIntensity = 0 }):Play()
+        end
+
+        -- Засасывание пылесосом вниз экрана: сжимается по Y в тонкую полосу, уменьшается по X и улетает вниз
+        local targetY = UDim2.new(MainWindow.Position.X.Scale, MainWindow.Position.X.Offset, 1, 120)
+        local posTween = TweenService:Create(MainWindow, TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Position = targetY,
+            Size = UDim2.new(0, 320, 0, 15)
+        })
+        local scaleTween = TweenService:Create(WindowScale, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Scale = 0.35
+        })
+        posTween:Play()
+        scaleTween:Play()
+        posTween.Completed:Wait()
+
+        MainWindow.Visible = false
+        -- Возвращаем исходный размер для следующего открытия
+        MainWindow.Size = normalSize
+        WindowScale.Scale = 1
+        if DoF and DoF.Parent then DoF.Enabled = false end
+        isToggling = false
     end
 end
 
