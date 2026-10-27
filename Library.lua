@@ -83,7 +83,7 @@ local Theme = {
     WindowBg = Color3.fromRGB(24, 24, 27),       -- Чистый тёмный графит фона окна (#18181b)
     SidebarBg = Color3.fromRGB(20, 20, 22),      -- Сайдбар
     ContentBg = Color3.fromRGB(24, 24, 27),      -- Контент
-    CardFill = Color3.fromRGB(27, 27, 30),       -- Карточки секций: на 3 единицы светлее фона окна (1 в 1 в тон)
+    CardFill = Color3.fromRGB(24, 24, 27),       -- Карточки секций: 1 в 1 тон фона окна (#18181b)
     PillBarBg = Color3.fromRGB(28, 28, 32),      -- Капсула оружия (#1c1c20)
     DropdownBg = Color3.fromRGB(20, 20, 23),     -- Внутренность селектора
     PopupBg = Color3.fromRGB(22, 22, 25),        -- Всплывающий список
@@ -350,10 +350,12 @@ OverlayLayer.BackgroundTransparency = 1
 OverlayLayer.ZIndex = 200
 OverlayLayer.Parent = MainWindow
 
--- Идеально плавное перетаскивание окна (Direct Mouse Tracking 1:1 без рассинхрона)
+-- Ультраплавное перетаскивание окна (120+ FPS критический демпфер / Exponential Smoothing)
 local dragging = false
 local dragMouseStart = Vector2.zero
 local dragWinStart = Vector2.zero
+local currentDragOffset = Vector2.zero
+local targetDragOffset = Vector2.zero
 local normalPos = UDim2.new(0.5, 0, 0.5, 0)
 local normalSize = UDim2.new(0, 860, 0, 560)
 
@@ -363,6 +365,8 @@ trackConn(MainWindow.InputBegan:Connect(function(input)
             dragging = true
             dragMouseStart = Vector2.new(input.Position.X, input.Position.Y)
             dragWinStart = Vector2.new(MainWindow.Position.X.Offset, MainWindow.Position.Y.Offset)
+            currentDragOffset = dragWinStart
+            targetDragOffset = dragWinStart
         end
     end
 end))
@@ -373,16 +377,22 @@ trackConn(UserInputService.InputEnded:Connect(function(input)
     end
 end))
 
--- Синхронизация строго в RenderStepped по реальной позиции курсора (абсолютно монолитное движение без отставания и рывков)
-trackConn(RunService.RenderStepped:Connect(function()
+-- Частото-независимая интерполяция 120 FPS (критическое сглаживание без задержек и ступенек)
+trackConn(RunService.RenderStepped:Connect(function(dt)
     if dragging then
         local mousePos = UserInputService:GetMouseLocation()
         local topInset = GuiService:GetGuiInset()
-        -- mousePos включает topInset, убираем его для точной дельты
         local curMouse = Vector2.new(mousePos.X, mousePos.Y - topInset.Y)
         local deltaX = curMouse.X - dragMouseStart.X
         local deltaY = curMouse.Y - dragMouseStart.Y
-        normalPos = UDim2.new(MainWindow.Position.X.Scale, math.floor(dragWinStart.X + deltaX), MainWindow.Position.Y.Scale, math.floor(dragWinStart.Y + deltaY))
+        targetDragOffset = dragWinStart + Vector2.new(deltaX, deltaY)
+    end
+
+    if dragging or (currentDragOffset - targetDragOffset).Magnitude > 0.05 then
+        -- 1 - math.exp(-38 * dt) даёт идеальный шелковистый отклик и на 60, и на 120, и на 240 FPS
+        local alpha = 1 - math.exp(-38 * math.clamp(dt, 0.001, 0.05))
+        currentDragOffset = currentDragOffset:Lerp(targetDragOffset, alpha)
+        normalPos = UDim2.new(MainWindow.Position.X.Scale, currentDragOffset.X, MainWindow.Position.Y.Scale, currentDragOffset.Y)
         MainWindow.Position = normalPos
     end
 end))
@@ -1189,13 +1199,13 @@ local function addBottomLine(parent)
     return line
 end
 
--- СЕКЦИЯ-КАРТОЧКА: чуууть-чуть светлее фона, 1 в 1 в тон
+-- СЕКЦИЯ-КАРТОЧКА: 1 в 1 тон фона, прозрачность на 0.05 меньше (0.15)
 local function createSectionCard(column, title)
     local cardWrapper = Instance.new("Frame")
     cardWrapper.Size = UDim2.new(1, 0, 0, 0)
     cardWrapper.AutomaticSize = Enum.AutomaticSize.Y
     cardWrapper.BackgroundColor3 = Theme.CardFill
-    cardWrapper.BackgroundTransparency = 0.2
+    cardWrapper.BackgroundTransparency = 0.15
     cardWrapper.LayoutOrder = nextOrder()
     cardWrapper.Parent = column
     addCorner(cardWrapper, 10)
