@@ -83,7 +83,7 @@ local Theme = {
     WindowBg = Color3.fromRGB(24, 24, 27),       -- Чистый тёмный графит фона окна (#18181b)
     SidebarBg = Color3.fromRGB(20, 20, 22),      -- Сайдбар
     ContentBg = Color3.fromRGB(24, 24, 27),      -- Контент
-    CardFill = Color3.fromRGB(24, 24, 27),       -- Карточки секций ровно в цвет фона
+    CardFill = Color3.fromRGB(27, 27, 30),       -- Карточки секций: на 3 единицы светлее фона окна (1 в 1 в тон)
     PillBarBg = Color3.fromRGB(28, 28, 32),      -- Капсула оружия (#1c1c20)
     DropdownBg = Color3.fromRGB(20, 20, 23),     -- Внутренность селектора
     PopupBg = Color3.fromRGB(22, 22, 25),        -- Всплывающий список
@@ -350,12 +350,10 @@ OverlayLayer.BackgroundTransparency = 1
 OverlayLayer.ZIndex = 200
 OverlayLayer.Parent = MainWindow
 
--- Плавное инерционное перетаскивание окна (Smooth Dragging с интерполяцией на RenderStepped)
+-- Идеально плавное перетаскивание окна (Direct Mouse Tracking 1:1 без рассинхрона)
 local dragging = false
-local dragStartPos = Vector2.zero
-local dragStartWinPos = Vector2.zero
-local currentDragOffset = Vector2.zero
-local targetDragOffset = Vector2.zero
+local dragMouseStart = Vector2.zero
+local dragWinStart = Vector2.zero
 local normalPos = UDim2.new(0.5, 0, 0.5, 0)
 local normalSize = UDim2.new(0, 860, 0, 560)
 
@@ -363,10 +361,8 @@ trackConn(MainWindow.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         if (input.Position.Y - MainWindow.AbsolutePosition.Y) <= 56 then
             dragging = true
-            dragStartPos = Vector2.new(input.Position.X, input.Position.Y)
-            dragStartWinPos = Vector2.new(MainWindow.Position.X.Offset, MainWindow.Position.Y.Offset)
-            currentDragOffset = dragStartWinPos
-            targetDragOffset = dragStartWinPos
+            dragMouseStart = Vector2.new(input.Position.X, input.Position.Y)
+            dragWinStart = Vector2.new(MainWindow.Position.X.Offset, MainWindow.Position.Y.Offset)
         end
     end
 end))
@@ -377,20 +373,16 @@ trackConn(UserInputService.InputEnded:Connect(function(input)
     end
 end))
 
-trackConn(UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local deltaX = input.Position.X - dragStartPos.X
-        local deltaY = input.Position.Y - dragStartPos.Y
-        targetDragOffset = dragStartWinPos + Vector2.new(deltaX, deltaY)
-    end
-end))
-
--- Плавное следование окна за курсором каждый кадр без микро-фризов и ступенек
-trackConn(RunService.RenderStepped:Connect(function(dt)
-    if dragging or (currentDragOffset - targetDragOffset).Magnitude > 0.2 then
-        local factor = math.clamp(dt * 24, 0, 1) -- мягкий пружинящий lerp
-        currentDragOffset = currentDragOffset:Lerp(targetDragOffset, factor)
-        normalPos = UDim2.new(MainWindow.Position.X.Scale, math.floor(currentDragOffset.X + 0.5), MainWindow.Position.Y.Scale, math.floor(currentDragOffset.Y + 0.5))
+-- Синхронизация строго в RenderStepped по реальной позиции курсора (абсолютно монолитное движение без отставания и рывков)
+trackConn(RunService.RenderStepped:Connect(function()
+    if dragging then
+        local mousePos = UserInputService:GetMouseLocation()
+        local topInset = GuiService:GetGuiInset()
+        -- mousePos включает topInset, убираем его для точной дельты
+        local curMouse = Vector2.new(mousePos.X, mousePos.Y - topInset.Y)
+        local deltaX = curMouse.X - dragMouseStart.X
+        local deltaY = curMouse.Y - dragMouseStart.Y
+        normalPos = UDim2.new(MainWindow.Position.X.Scale, math.floor(dragWinStart.X + deltaX), MainWindow.Position.Y.Scale, math.floor(dragWinStart.Y + deltaY))
         MainWindow.Position = normalPos
     end
 end))
@@ -1197,13 +1189,13 @@ local function addBottomLine(parent)
     return line
 end
 
--- СЕКЦИЯ-КАРТОЧКА: полупрозрачная карточка ровно в цвет фона окна
+-- СЕКЦИЯ-КАРТОЧКА: чуууть-чуть светлее фона, 1 в 1 в тон
 local function createSectionCard(column, title)
     local cardWrapper = Instance.new("Frame")
     cardWrapper.Size = UDim2.new(1, 0, 0, 0)
     cardWrapper.AutomaticSize = Enum.AutomaticSize.Y
     cardWrapper.BackgroundColor3 = Theme.CardFill
-    cardWrapper.BackgroundTransparency = 0.45
+    cardWrapper.BackgroundTransparency = 0.2
     cardWrapper.LayoutOrder = nextOrder()
     cardWrapper.Parent = column
     addCorner(cardWrapper, 10)
