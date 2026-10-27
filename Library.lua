@@ -396,36 +396,38 @@ local function setMenuVisible(vis)
         if DoF and DoF.Parent then
             DoF.Enabled = true
             DoF.NearIntensity = 0
-            TweenService:Create(DoF, TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { NearIntensity = 1 }):Play()
+            TweenService:Create(DoF, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { NearIntensity = 1 }):Play()
         end
 
-        -- НАЧАЛО: Спагеттированное состояние внизу экрана (сильно вытянута по вертикали и узкая по горизонтали)
-        MainWindow.Position = UDim2.new(normalPos.X.Scale, normalPos.X.Offset, 1, 350)
-        MainWindow.Size = UDim2.new(0, 160, 0, 750)
-        WindowScale.Scale = 0.65
+        local startT = tick()
+        local duration = 0.38
+        while true do
+            local elapsed = tick() - startT
+            local alpha = math.clamp(elapsed / duration, 0, 1)
+            -- Эластичная интерполяция OutBack
+            local t = alpha - 1
+            local ease = (t * t * ((1.70158 + 1) * t + 1.70158) + 1)
 
-        -- ФАЗА 1: Вытягивание вверх из воронки пылесоса
-        local tUp = TweenService:Create(MainWindow, TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Position = UDim2.new(normalPos.X.Scale, normalPos.X.Offset, 0.65, 0),
-            Size = UDim2.new(0, 480, 0, 680),
-        })
-        TweenService:Create(WindowScale, TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Scale = 0.85
-        }):Play()
-        tUp:Play()
-        tUp.Completed:Wait()
+            -- Воронка: снизу узкое горлышко (pinch), раскрывающееся в нормальный прямоугольник
+            local currentScale = 0.4 + 0.6 * ease
+            WindowScale.Scale = currentScale
 
-        -- ФАЗА 2: Плавный эластичный переход в исходные размеры (распрямление из спагетти)
-        local tSnap = TweenService:Create(MainWindow, TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Position = normalPos,
-            Size = normalSize
-        })
-        TweenService:Create(WindowScale, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Scale = 1
-        }):Play()
-        tSnap:Play()
-        tSnap.Completed:Wait()
+            -- Позиция поднимается снизу
+            local curY = 1.2 - 0.7 * ease
+            MainWindow.Position = UDim2.new(normalPos.X.Scale, normalPos.X.Offset, curY, normalPos.Y.Offset)
 
+            -- Пропорции: от сплющенной воронки к нормальным размерам
+            local curW = normalSize.X.Offset * (0.3 + 0.7 * ease)
+            local curH = normalSize.Y.Offset * (0.2 + 0.8 * ease)
+            MainWindow.Size = UDim2.new(0, curW, 0, curH)
+
+            if alpha >= 1 then break end
+            RunService.RenderStepped:Wait()
+        end
+
+        MainWindow.Position = normalPos
+        MainWindow.Size = normalSize
+        WindowScale.Scale = 1
         isToggling = false
     else
         menuOpen = false
@@ -433,36 +435,36 @@ local function setMenuVisible(vis)
             if activePopupClose then activePopupClose() else activePopup.Visible = false end
         end
 
-        -- Плавное угасание DoF блюра
         if DoF and DoF.Parent then
-            TweenService:Create(DoF, TweenInfo.new(0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { NearIntensity = 0 }):Play()
+            TweenService:Create(DoF, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { NearIntensity = 0 }):Play()
         end
 
-        -- ФАЗА 1 СПАГЕТТИЗАЦИИ: Меню начинает растягиваться вниз и сжиматься по ширине (гравитация/засасывание воронкой)
-        local tSpag = TweenService:Create(MainWindow, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Position = UDim2.new(MainWindow.Position.X.Scale, MainWindow.Position.X.Offset, 0.72, 0),
-            Size = UDim2.new(0, 420, 0, 720),
-        })
-        TweenService:Create(WindowScale, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Scale = 0.85
-        }):Play()
-        tSpag:Play()
-        tSpag.Completed:Wait()
+        local startT = tick()
+        local duration = 0.34
+        local originPos = MainWindow.Position
+        while true do
+            local elapsed = tick() - startT
+            local alpha = math.clamp(elapsed / duration, 0, 1)
+            -- Ускоряющаяся интерполяция InCubic / InExpo (эффект черной дыры / пылесоса)
+            local ease = alpha * alpha * alpha
 
-        -- ФАЗА 2 УЛЁТА: Превращение в ультра-узкую спагетти и резкий залет в точку всасывания под экран
-        local dropY = UDim2.new(MainWindow.Position.X.Scale, MainWindow.Position.X.Offset, 1, 400)
-        local tSuck = TweenService:Create(MainWindow, TweenInfo.new(0.26, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
-            Position = dropY,
-            Size = UDim2.new(0, 80, 0, 900),
-        })
-        TweenService:Create(WindowScale, TweenInfo.new(0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Scale = 0.4
-        }):Play()
-        tSuck:Play()
-        tSuck.Completed:Wait()
+            -- ВОРОНКА: по мере затягивания вниз ширина сжимается в конус/воронку в разы быстрее, чем высота
+            local curW = normalSize.X.Offset * (1 - ease * 0.92)  -- сжимается до 8% от ширины (острие воронки)
+            local curH = normalSize.Y.Offset * (1 - ease * 0.75)  -- высота утягивается следом
+            local curScale = 1 - ease * 0.65
+
+            -- Центр масс смещается резко вниз к точке всасывания
+            local curY = originPos.Y.Scale + (1.25 - originPos.Y.Scale) * ease
+            MainWindow.Position = UDim2.new(originPos.X.Scale, originPos.X.Offset, curY, originPos.Y.Offset)
+            MainWindow.Size = UDim2.new(0, math.max(10, curW), 0, math.max(10, curH))
+            WindowScale.Scale = math.max(0.05, curScale)
+
+            if alpha >= 1 then break end
+            RunService.RenderStepped:Wait()
+        end
 
         MainWindow.Visible = false
-        -- Возвращаем исходную форму для следующего открытия
+        MainWindow.Position = normalPos
         MainWindow.Size = normalSize
         WindowScale.Scale = 1
         if DoF and DoF.Parent then DoF.Enabled = false end
