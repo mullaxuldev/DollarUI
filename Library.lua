@@ -80,17 +80,17 @@ local Fonts = {
 
 
 local Theme = {
-    WindowBg = Color3.fromRGB(32, 32, 34),       -- Базовый глубокий графит
-    SidebarBg = Color3.fromRGB(36, 36, 38),      -- Сайдбар
-    ContentBg = Color3.fromRGB(30, 30, 32),      -- Тёмный фон контентной зоны (карточки на его фоне ярко выделяются)
-    CardFill = Color3.fromRGB(255, 255, 255),    -- Белый базовый цвет, чтобы UIGradient красил его в чистые цвета без затемнения
-    PillBarBg = Color3.fromRGB(39, 39, 42),      -- Капсула оружия (#27272a)
-    DropdownBg = Color3.fromRGB(32, 32, 34),     -- #202022 Внутренность селектора
-    PopupBg = Color3.fromRGB(32, 32, 34),        -- Всплывающий список
-    SearchBtnBg = Color3.fromRGB(39, 39, 41),    -- Кнопка лупы
-    StrokeOuter = Color3.fromRGB(78, 78, 86),    -- Мягкий внешний контур окна
-    StrokeInner = Color3.fromRGB(80, 80, 88),    -- Контуры карточек и полей (светлее, чётко видны)
-    Divider = Color3.fromRGB(72, 72, 80),        -- Разделительные линии (светлее и четче)
+    WindowBg = Color3.fromRGB(24, 24, 27),       -- Чистый тёмный графит фона окна (#18181b)
+    SidebarBg = Color3.fromRGB(20, 20, 22),      -- Сайдбар
+    ContentBg = Color3.fromRGB(24, 24, 27),      -- Контент
+    CardFill = Color3.fromRGB(24, 24, 27),       -- Карточки секций ровно в цвет фона
+    PillBarBg = Color3.fromRGB(28, 28, 32),      -- Капсула оружия (#1c1c20)
+    DropdownBg = Color3.fromRGB(18, 18, 20),     -- Внутренность селектора
+    PopupBg = Color3.fromRGB(20, 20, 22),        -- Всплывающий список
+    SearchBtnBg = Color3.fromRGB(28, 28, 32),    -- Кнопка лупы
+    StrokeOuter = Color3.fromRGB(48, 48, 54),    -- Мягкий внешний контур окна
+    StrokeInner = Color3.fromRGB(44, 44, 50),    -- Тонкий чистый контур карточек
+    Divider = Color3.fromRGB(38, 38, 44),        -- Разделительные линии
     TextWhite = Color3.fromRGB(246, 246, 248),   -- Основной чистый текст
     TextGray = Color3.fromRGB(188, 188, 192),    -- Неактивные пункты и иконки
     TextMuted = Color3.fromRGB(132, 132, 138),   -- Заголовки RAGEBOT / TARGETING
@@ -1187,36 +1187,25 @@ local function addBottomLine(parent)
     return line
 end
 
--- СЕКЦИЯ-КАРТОЧКА: глубокая объемная карточка со светотенью, верхним бликом и мягкой обводкой
+-- СЕКЦИЯ-КАРТОЧКА: карточка ровно в цвет фона окна с аккуратным контуром и фаской
 local function createSectionCard(column, title)
     local cardWrapper = Instance.new("Frame")
     cardWrapper.Size = UDim2.new(1, 0, 0, 0)
     cardWrapper.AutomaticSize = Enum.AutomaticSize.Y
-    cardWrapper.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    cardWrapper.BackgroundTransparency = 0
+    cardWrapper.BackgroundColor3 = Theme.CardFill
+    cardWrapper.BackgroundTransparency = 0.25
     cardWrapper.LayoutOrder = nextOrder()
     cardWrapper.Parent = column
     addCorner(cardWrapper, 10)
-    
-    -- Объемный градиент фона: настоящий светлый графит CS2 Neverlose
-    local cardBgGrad = Instance.new("UIGradient")
-    cardBgGrad.Rotation = 90
-    cardBgGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(110, 110, 118)), -- яркий верхний свет
-        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(92, 92, 98)),
-        ColorSequenceKeypoint.new(0.7, Color3.fromRGB(80, 80, 86)),
-        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(72, 72, 78)),   -- низ карточки (светлый графит, точно не черный!)
-    })
-    cardBgGrad.Parent = cardWrapper
 
-    -- Объемная обводка (светлый четкий контур)
+    -- Объемная обводка (сверху чуть светлее, снизу в цвет фона)
     local cardStroke = addStroke(cardWrapper, Color3.fromRGB(255, 255, 255), 1, 0)
     local strokeGrad = Instance.new("UIGradient")
     strokeGrad.Rotation = 90
     strokeGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(160, 160, 175)), -- верхняя светлая фаска
-        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(120, 120, 130)),
-        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(90, 90, 100)),   -- низ обводки
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(64, 64, 72)), -- верхняя мягкая фаска
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(46, 46, 52)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(36, 36, 42)), -- низ обводки
     })
     strokeGrad.Parent = cardStroke
 
