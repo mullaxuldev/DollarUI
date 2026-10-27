@@ -1182,6 +1182,7 @@ end
 -- Мягкая заблюренная разделительная линия с градиентным затуханием по краям
 local function addBottomLine(parent)
     local line = Instance.new("Frame")
+    line.Name = "BottomDividerLine"
     line.Position = UDim2.new(0, 14, 1, -1)
     line.Size = UDim2.new(1, -28, 0, 1)
     line.BackgroundColor3 = Theme.Divider
@@ -1207,7 +1208,7 @@ local function createSectionCard(column, title)
     cardWrapper.Size = UDim2.new(1, 0, 0, 0)
     cardWrapper.AutomaticSize = Enum.AutomaticSize.Y
     cardWrapper.BackgroundColor3 = Theme.CardFill
-    cardWrapper.BackgroundTransparency = 0.65
+    cardWrapper.BackgroundTransparency = 0.45
     cardWrapper.LayoutOrder = nextOrder()
     cardWrapper.Parent = column
     addCorner(cardWrapper, 10)
@@ -1217,9 +1218,9 @@ local function createSectionCard(column, title)
     local strokeGrad = Instance.new("UIGradient")
     strokeGrad.Rotation = 90
     strokeGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(78, 78, 88)), -- верхняя светлая фаска
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(56, 56, 64)),
-        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(40, 40, 46)), -- низ обводки
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(68, 68, 76)), -- верхняя фаска
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(46, 46, 52)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(30, 30, 34)), -- низ обводки (без белой линии!)
     })
     strokeGrad.Parent = cardStroke
 
@@ -1261,6 +1262,29 @@ local function createSectionCard(column, title)
     local cLayout = Instance.new("UIListLayout")
     cLayout.SortOrder = Enum.SortOrder.LayoutOrder
     cLayout.Parent = itemsContainer
+
+    -- Автоматическое скрытие нижней разделительной линии у последнего элемента карточки
+    task.defer(function()
+        local function refreshDividers()
+            local children = {}
+            for _, ch in ipairs(itemsContainer:GetChildren()) do
+                if ch:IsA("Frame") and ch.Name ~= "UIListLayout" then
+                    table.insert(children, ch)
+                end
+            end
+            table.sort(children, function(a, b) return a.LayoutOrder < b.LayoutOrder end)
+            for i, ch in ipairs(children) do
+                local div = ch:FindFirstChild("BottomDividerLine")
+                if div then
+                    div.Visible = (i < #children)
+                end
+            end
+        end
+        itemsContainer.ChildAdded:Connect(function()
+            task.defer(refreshDividers)
+        end)
+        refreshDividers()
+    end)
 
     return itemsContainer
 end
