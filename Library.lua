@@ -538,8 +538,27 @@ Sidebar.BackgroundTransparency = 1
 Sidebar.BorderSizePixel = 0
 Sidebar.Parent = MainWindow
 
--- Вертикальная разделительная линия между сайдбаром и правой частью
-makeBox(Sidebar, UDim2.new(1, -1, 0, 0), UDim2.new(0, 1, 1, 0), Theme.Divider, 0)
+-- Вертикальная разделительная линия между сайдбаром и правой частью (мягкая заблюренная)
+do
+    local vLine = Instance.new("Frame")
+    vLine.Position = UDim2.new(1, -1, 0, 0)
+    vLine.Size = UDim2.new(0, 1, 1, 0)
+    vLine.BackgroundColor3 = Theme.Divider
+    vLine.BackgroundTransparency = 0.2
+    vLine.BorderSizePixel = 0
+    vLine.Parent = Sidebar
+
+    local vGrad = Instance.new("UIGradient")
+    vGrad.Rotation = 90
+    vGrad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0.0, 0.8),
+        NumberSequenceKeypoint.new(0.08, 0.25),
+        NumberSequenceKeypoint.new(0.5, 0.1),
+        NumberSequenceKeypoint.new(0.92, 0.25),
+        NumberSequenceKeypoint.new(1.0, 0.8),
+    })
+    vGrad.Parent = vLine
+end
 
 -- Логотип "$ dollarhack"
 local LogoSym = Instance.new("TextLabel")
@@ -737,8 +756,26 @@ trackConn(ConfigsBtn.MouseButton1Click:Connect(function()
     switchTab("configs")
 end))
 
--- Нижняя секция профиля (с разделительной линией сверху как на референсе)
-makeBox(Sidebar, UDim2.new(0, 0, 1, -64), UDim2.new(1, -1, 0, 1), Theme.Divider, 0)
+-- Нижняя секция профиля (с мягкой заблюренной разделительной линией сверху)
+do
+    local pLine = Instance.new("Frame")
+    pLine.Position = UDim2.new(0, 10, 1, -64)
+    pLine.Size = UDim2.new(1, -20, 0, 1)
+    pLine.BackgroundColor3 = Theme.Divider
+    pLine.BackgroundTransparency = 0.25
+    pLine.BorderSizePixel = 0
+    pLine.Parent = Sidebar
+
+    local pGrad = Instance.new("UIGradient")
+    pGrad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0.0, 1.0),
+        NumberSequenceKeypoint.new(0.15, 0.35),
+        NumberSequenceKeypoint.new(0.5, 0.1),
+        NumberSequenceKeypoint.new(0.85, 0.35),
+        NumberSequenceKeypoint.new(1.0, 1.0),
+    })
+    pGrad.Parent = pLine
+end
 
 local ProfileFrame = Instance.new("Frame")
 ProfileFrame.Size = UDim2.new(1, 0, 0, 64)
@@ -847,7 +884,26 @@ HeaderTitle.Parent = TopBar
 
 
 
-makeBox(ContentArea, UDim2.new(0, 0, 0, 54), UDim2.new(1, 0, 0, 1), Theme.Divider, 0)
+-- Мягкая разделительная линия под топбаром
+do
+    local tLine = Instance.new("Frame")
+    tLine.Position = UDim2.new(0, 16, 0, 54)
+    tLine.Size = UDim2.new(1, -32, 0, 1)
+    tLine.BackgroundColor3 = Theme.Divider
+    tLine.BackgroundTransparency = 0.25
+    tLine.BorderSizePixel = 0
+    tLine.Parent = ContentArea
+
+    local tGrad = Instance.new("UIGradient")
+    tGrad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0.0, 0.9),
+        NumberSequenceKeypoint.new(0.08, 0.3),
+        NumberSequenceKeypoint.new(0.5, 0.1),
+        NumberSequenceKeypoint.new(0.92, 0.3),
+        NumberSequenceKeypoint.new(1.0, 0.9),
+    })
+    tGrad.Parent = tLine
+end
 
 --------------------------------------------------------------------------------
 -- КАПСУЛА ОРУЖИЯ (ВСЕ 9 ОРУЖИЙ ВНУТРИ РАМКИ)
@@ -1012,8 +1068,26 @@ local function nextOrder()
 end
 
 -- Разделительная линия между функциями: ширина как у трека слайдера (отступ по 14px слева и справа)
+-- Мягкая заблюренная разделительная линия с градиентным затуханием по краям
 local function addBottomLine(parent)
-    makeBox(parent, UDim2.new(0, 14, 1, -1), UDim2.new(1, -28, 0, 1), Theme.Divider, 0)
+    local line = Instance.new("Frame")
+    line.Position = UDim2.new(0, 14, 1, -1)
+    line.Size = UDim2.new(1, -28, 0, 1)
+    line.BackgroundColor3 = Theme.Divider
+    line.BackgroundTransparency = 0.25
+    line.BorderSizePixel = 0
+    line.Parent = parent
+
+    local grad = Instance.new("UIGradient")
+    grad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0.0, 1.0),
+        NumberSequenceKeypoint.new(0.12, 0.4),
+        NumberSequenceKeypoint.new(0.5, 0.1),
+        NumberSequenceKeypoint.new(0.88, 0.4),
+        NumberSequenceKeypoint.new(1.0, 1.0),
+    })
+    grad.Parent = line
+    return line
 end
 
 -- СЕКЦИЯ-КАРТОЧКА: большая скругленная карточка с обводкой и фоном, внутри которой лежат заголовок и функции
@@ -2534,7 +2608,30 @@ function SectionCardMeta:AddLabel(arg1, arg2)
 end
 
 function SectionCardMeta:AddDivider()
-    -- Декоративный разделитель внутри карточки
+    local divRow = Instance.new("Frame")
+    divRow.Size = UDim2.new(1, 0, 0, 10)
+    divRow.BackgroundTransparency = 1
+    divRow.LayoutOrder = nextOrder()
+    divRow.Parent = self.Container
+
+    local line = Instance.new("Frame")
+    line.Position = UDim2.new(0, 14, 0.5, 0)
+    line.Size = UDim2.new(1, -28, 0, 1)
+    line.BackgroundColor3 = Theme.Divider
+    line.BackgroundTransparency = 0.25
+    line.BorderSizePixel = 0
+    line.Parent = divRow
+
+    local grad = Instance.new("UIGradient")
+    grad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0.0, 1.0),
+        NumberSequenceKeypoint.new(0.12, 0.4),
+        NumberSequenceKeypoint.new(0.5, 0.1),
+        NumberSequenceKeypoint.new(0.88, 0.4),
+        NumberSequenceKeypoint.new(1.0, 1.0),
+    })
+    grad.Parent = line
+    return divRow
 end
 
 function SectionCardMeta:AddColorPicker(arg1, arg2)
