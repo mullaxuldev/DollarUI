@@ -350,40 +350,50 @@ OverlayLayer.BackgroundTransparency = 1
 OverlayLayer.ZIndex = 200
 OverlayLayer.Parent = MainWindow
 
--- Перетаскивание окна
-local dragging, dragInput, dragStart, startPos
+-- Плавное инерционное перетаскивание окна (Smooth Dragging с интерполяцией на RenderStepped)
+local dragging = false
+local dragStartPos = Vector2.zero
+local dragStartWinPos = Vector2.zero
+local currentDragOffset = Vector2.zero
+local targetDragOffset = Vector2.zero
+local normalPos = UDim2.new(0.5, 0, 0.5, 0)
+local normalSize = UDim2.new(0, 860, 0, 560)
+
 trackConn(MainWindow.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         if (input.Position.Y - MainWindow.AbsolutePosition.Y) <= 56 then
             dragging = true
-            dragStart = input.Position
-            startPos = MainWindow.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
+            dragStartPos = Vector2.new(input.Position.X, input.Position.Y)
+            dragStartWinPos = Vector2.new(MainWindow.Position.X.Offset, MainWindow.Position.Y.Offset)
+            currentDragOffset = dragStartWinPos
+            targetDragOffset = dragStartWinPos
         end
     end
 end))
-trackConn(MainWindow.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end))
-trackConn(UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        normalPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        MainWindow.Position = normalPos
+
+trackConn(UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
     end
 end))
 
-local menuOpen = true
-local toggleKey = Enum.KeyCode.RightShift
-local isToggling = false
-local normalPos = UDim2.new(0.5, 0, 0.5, 0)
-local normalSize = UDim2.new(0, 860, 0, 560)
+trackConn(UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local deltaX = input.Position.X - dragStartPos.X
+        local deltaY = input.Position.Y - dragStartPos.Y
+        targetDragOffset = dragStartWinPos + Vector2.new(deltaX, deltaY)
+    end
+end))
+
+-- Плавное следование окна за курсором каждый кадр без микро-фризов и ступенек
+trackConn(RunService.RenderStepped:Connect(function(dt)
+    if dragging or (currentDragOffset - targetDragOffset).Magnitude > 0.2 then
+        local factor = math.clamp(dt * 24, 0, 1) -- мягкий пружинящий lerp
+        currentDragOffset = currentDragOffset:Lerp(targetDragOffset, factor)
+        normalPos = UDim2.new(MainWindow.Position.X.Scale, math.floor(currentDragOffset.X + 0.5), MainWindow.Position.Y.Scale, math.floor(currentDragOffset.Y + 0.5))
+        MainWindow.Position = normalPos
+    end
+end))
 
 local function setMenuVisible(vis)
     if isToggling then return end
