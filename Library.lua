@@ -83,14 +83,14 @@ local Theme = {
     WindowBg = Color3.fromRGB(24, 24, 27),       -- Чистый тёмный графит фона окна (#18181b)
     SidebarBg = Color3.fromRGB(20, 20, 22),      -- Сайдбар
     ContentBg = Color3.fromRGB(24, 24, 27),      -- Контент
-    CardFill = Color3.fromRGB(24, 24, 27),       -- Карточки секций ровно в цвет фона
+    CardFill = Color3.fromRGB(33, 33, 37),       -- Карточки секций: прям ненамного светлее фона (#212125)
     PillBarBg = Color3.fromRGB(28, 28, 32),      -- Капсула оружия (#1c1c20)
-    DropdownBg = Color3.fromRGB(18, 18, 20),     -- Внутренность селектора
-    PopupBg = Color3.fromRGB(20, 20, 22),        -- Всплывающий список
-    SearchBtnBg = Color3.fromRGB(28, 28, 32),    -- Кнопка лупы
-    StrokeOuter = Color3.fromRGB(48, 48, 54),    -- Мягкий внешний контур окна
-    StrokeInner = Color3.fromRGB(44, 44, 50),    -- Тонкий чистый контур карточек
-    Divider = Color3.fromRGB(38, 38, 44),        -- Разделительные линии
+    DropdownBg = Color3.fromRGB(22, 22, 25),     -- Внутренность селектора
+    PopupBg = Color3.fromRGB(24, 24, 27),        -- Всплывающий список
+    SearchBtnBg = Color3.fromRGB(30, 30, 34),    -- Кнопка лупы
+    StrokeOuter = Color3.fromRGB(52, 52, 58),    -- Мягкий внешний контур окна
+    StrokeInner = Color3.fromRGB(56, 56, 64),    -- Тонкий контур карточек
+    Divider = Color3.fromRGB(72, 72, 82),        -- Разделительные линии (светлее, четко видны)
     TextWhite = Color3.fromRGB(246, 246, 248),   -- Основной чистый текст
     TextGray = Color3.fromRGB(188, 188, 192),    -- Неактивные пункты и иконки
     TextMuted = Color3.fromRGB(132, 132, 138),   -- Заголовки RAGEBOT / TARGETING
@@ -1171,41 +1171,41 @@ local function addBottomLine(parent)
     line.Position = UDim2.new(0, 14, 1, -1)
     line.Size = UDim2.new(1, -28, 0, 1)
     line.BackgroundColor3 = Theme.Divider
-    line.BackgroundTransparency = 0.25
+    line.BackgroundTransparency = 0.05
     line.BorderSizePixel = 0
     line.Parent = parent
 
     local grad = Instance.new("UIGradient")
     grad.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0.0, 1.0),
-        NumberSequenceKeypoint.new(0.12, 0.4),
-        NumberSequenceKeypoint.new(0.5, 0.1),
-        NumberSequenceKeypoint.new(0.88, 0.4),
-        NumberSequenceKeypoint.new(1.0, 1.0),
+        NumberSequenceKeypoint.new(0.0, 0.9),
+        NumberSequenceKeypoint.new(0.08, 0.15),
+        NumberSequenceKeypoint.new(0.5, 0.0),
+        NumberSequenceKeypoint.new(0.92, 0.15),
+        NumberSequenceKeypoint.new(1.0, 0.9),
     })
     grad.Parent = line
     return line
 end
 
--- СЕКЦИЯ-КАРТОЧКА: карточка ровно в цвет фона окна с аккуратным контуром и фаской
+-- СЕКЦИЯ-КАРТОЧКА: карточка прям ненамного светлее фона с аккуратным контуром и фаской
 local function createSectionCard(column, title)
     local cardWrapper = Instance.new("Frame")
     cardWrapper.Size = UDim2.new(1, 0, 0, 0)
     cardWrapper.AutomaticSize = Enum.AutomaticSize.Y
     cardWrapper.BackgroundColor3 = Theme.CardFill
-    cardWrapper.BackgroundTransparency = 0.25
+    cardWrapper.BackgroundTransparency = 0.05
     cardWrapper.LayoutOrder = nextOrder()
     cardWrapper.Parent = column
     addCorner(cardWrapper, 10)
 
-    -- Объемная обводка (сверху чуть светлее, снизу в цвет фона)
+    -- Объемная обводка (сверху аккуратная фаска, снизу темнее)
     local cardStroke = addStroke(cardWrapper, Color3.fromRGB(255, 255, 255), 1, 0)
     local strokeGrad = Instance.new("UIGradient")
     strokeGrad.Rotation = 90
     strokeGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(64, 64, 72)), -- верхняя мягкая фаска
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(46, 46, 52)),
-        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(36, 36, 42)), -- низ обводки
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(78, 78, 88)), -- верхняя светлая фаска
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(56, 56, 64)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(40, 40, 46)), -- низ обводки
     })
     strokeGrad.Parent = cardStroke
 
@@ -2735,17 +2735,17 @@ function SectionCardMeta:AddDivider()
     line.Position = UDim2.new(0, 14, 0.5, 0)
     line.Size = UDim2.new(1, -28, 0, 1)
     line.BackgroundColor3 = Theme.Divider
-    line.BackgroundTransparency = 0.25
+    line.BackgroundTransparency = 0.05
     line.BorderSizePixel = 0
     line.Parent = divRow
 
     local grad = Instance.new("UIGradient")
     grad.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0.0, 1.0),
-        NumberSequenceKeypoint.new(0.12, 0.4),
-        NumberSequenceKeypoint.new(0.5, 0.1),
-        NumberSequenceKeypoint.new(0.88, 0.4),
-        NumberSequenceKeypoint.new(1.0, 1.0),
+        NumberSequenceKeypoint.new(0.0, 0.9),
+        NumberSequenceKeypoint.new(0.08, 0.15),
+        NumberSequenceKeypoint.new(0.5, 0.0),
+        NumberSequenceKeypoint.new(0.92, 0.15),
+        NumberSequenceKeypoint.new(1.0, 0.9),
     })
     grad.Parent = line
     return divRow
