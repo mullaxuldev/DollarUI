@@ -83,7 +83,7 @@ local Theme = {
     WindowBg = Color3.fromRGB(32, 32, 34),       -- Базовый глубокий графит
     SidebarBg = Color3.fromRGB(36, 36, 38),      -- Сайдбар
     ContentBg = Color3.fromRGB(30, 30, 32),      -- Тёмный фон контентной зоны (карточки на его фоне ярко выделяются)
-    CardFill = Color3.fromRGB(60, 60, 65),       -- Карточки секций (светло-серый графит)
+    CardFill = Color3.fromRGB(255, 255, 255),    -- Белый базовый цвет, чтобы UIGradient красил его в чистые цвета без затемнения
     PillBarBg = Color3.fromRGB(39, 39, 42),      -- Капсула оружия (#27272a)
     DropdownBg = Color3.fromRGB(32, 32, 34),     -- #202022 Внутренность селектора
     PopupBg = Color3.fromRGB(32, 32, 34),        -- Всплывающий список
@@ -1192,30 +1192,31 @@ local function createSectionCard(column, title)
     local cardWrapper = Instance.new("Frame")
     cardWrapper.Size = UDim2.new(1, 0, 0, 0)
     cardWrapper.AutomaticSize = Enum.AutomaticSize.Y
-    cardWrapper.BackgroundColor3 = Theme.CardFill
-    cardWrapper.BackgroundTransparency = 0.05
+    cardWrapper.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    cardWrapper.BackgroundTransparency = 0
     cardWrapper.LayoutOrder = nextOrder()
     cardWrapper.Parent = column
     addCorner(cardWrapper, 10)
     
-    -- Объемный градиент фона: выразительный светло-серый тон как на референсе CS2
+    -- Объемный градиент фона: настоящий светлый графит CS2 Neverlose
     local cardBgGrad = Instance.new("UIGradient")
     cardBgGrad.Rotation = 90
     cardBgGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(72, 72, 78)), -- верхний светлый отблеск
-        ColorSequenceKeypoint.new(0.35, Color3.fromRGB(60, 60, 65)),
-        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(50, 50, 54)),  -- нижняя часть карточки (не черная!)
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(110, 110, 118)), -- яркий верхний свет
+        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(92, 92, 98)),
+        ColorSequenceKeypoint.new(0.7, Color3.fromRGB(80, 80, 86)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(72, 72, 78)),   -- низ карточки (светлый графит, точно не черный!)
     })
     cardBgGrad.Parent = cardWrapper
 
     -- Объемная обводка (светлый четкий контур)
-    local cardStroke = addStroke(cardWrapper, Color3.fromRGB(95, 95, 105), 1, 0)
+    local cardStroke = addStroke(cardWrapper, Color3.fromRGB(255, 255, 255), 1, 0)
     local strokeGrad = Instance.new("UIGradient")
     strokeGrad.Rotation = 90
     strokeGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(125, 125, 138)), -- верхняя светлая фаска
-        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(90, 90, 98)),
-        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(65, 65, 72)),   -- низ обводки
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(160, 160, 175)), -- верхняя светлая фаска
+        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(120, 120, 130)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(90, 90, 100)),   -- низ обводки
     })
     strokeGrad.Parent = cardStroke
 
