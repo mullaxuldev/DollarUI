@@ -2410,11 +2410,12 @@ function SectionCardMeta:AddToggle(arg1, arg2)
             pcall(fn, val)
         end
     end
+    local selfSec = self
     function tObj:AddColorPicker(cpArg1, cpArg2)
-        return self:AddColorPicker(cpArg1, cpArg2)
+        return selfSec:AddColorPicker(cpArg1, cpArg2)
     end
     function tObj:AddKeyPicker(kpArg1, kpArg2)
-        return self:AddKeyPicker(kpArg1, kpArg2)
+        return selfSec:AddKeybind(kpArg1, kpArg2)
     end
 
     if getgenv().Toggles then getgenv().Toggles[flag] = tObj end
