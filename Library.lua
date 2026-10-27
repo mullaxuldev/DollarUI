@@ -80,17 +80,17 @@ local Fonts = {
 
 
 local Theme = {
-    WindowBg = Color3.fromRGB(37, 37, 39),       -- Базовый глубокий графит
-    SidebarBg = Color3.fromRGB(43, 43, 45),      -- Сайдбар
-    ContentBg = Color3.fromRGB(49, 49, 52),      -- Контент
-    CardFill = Color3.fromRGB(44, 44, 47),       -- Карточки секций (немного светлее окна)
+    WindowBg = Color3.fromRGB(32, 32, 34),       -- Базовый глубокий графит
+    SidebarBg = Color3.fromRGB(36, 36, 38),      -- Сайдбар
+    ContentBg = Color3.fromRGB(30, 30, 32),      -- Тёмный фон контентной зоны (карточки на его фоне ярко выделяются)
+    CardFill = Color3.fromRGB(60, 60, 65),       -- Карточки секций (светло-серый графит)
     PillBarBg = Color3.fromRGB(39, 39, 42),      -- Капсула оружия (#27272a)
     DropdownBg = Color3.fromRGB(32, 32, 34),     -- #202022 Внутренность селектора
     PopupBg = Color3.fromRGB(32, 32, 34),        -- Всплывающий список
     SearchBtnBg = Color3.fromRGB(39, 39, 41),    -- Кнопка лупы
-    StrokeOuter = Color3.fromRGB(68, 68, 74),    -- Мягкий внешний контур окна
-    StrokeInner = Color3.fromRGB(64, 64, 70),    -- Контуры карточек и полей (светлее, чётко видны)
-    Divider = Color3.fromRGB(56, 56, 62),        -- Разделительные линии (светлее и четче)
+    StrokeOuter = Color3.fromRGB(78, 78, 86),    -- Мягкий внешний контур окна
+    StrokeInner = Color3.fromRGB(80, 80, 88),    -- Контуры карточек и полей (светлее, чётко видны)
+    Divider = Color3.fromRGB(72, 72, 80),        -- Разделительные линии (светлее и четче)
     TextWhite = Color3.fromRGB(246, 246, 248),   -- Основной чистый текст
     TextGray = Color3.fromRGB(188, 188, 192),    -- Неактивные пункты и иконки
     TextMuted = Color3.fromRGB(132, 132, 138),   -- Заголовки RAGEBOT / TARGETING
@@ -1170,29 +1170,29 @@ local function createSectionCard(column, title)
     cardWrapper.Size = UDim2.new(1, 0, 0, 0)
     cardWrapper.AutomaticSize = Enum.AutomaticSize.Y
     cardWrapper.BackgroundColor3 = Theme.CardFill
-    cardWrapper.BackgroundTransparency = 0.12
+    cardWrapper.BackgroundTransparency = 0.05
     cardWrapper.LayoutOrder = nextOrder()
     cardWrapper.Parent = column
     addCorner(cardWrapper, 10)
     
-    -- Объемный градиент фона: сверху светлее (падающий свет), снизу глубже/темнее
+    -- Объемный градиент фона: выразительный светло-серый тон как на референсе CS2
     local cardBgGrad = Instance.new("UIGradient")
     cardBgGrad.Rotation = 90
     cardBgGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(56, 56, 60)), -- верхний светлый отблеск
-        ColorSequenceKeypoint.new(0.35, Color3.fromRGB(44, 44, 47)),
-        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(36, 36, 39)),  -- нижняя теневая часть
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(72, 72, 78)), -- верхний светлый отблеск
+        ColorSequenceKeypoint.new(0.35, Color3.fromRGB(60, 60, 65)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(50, 50, 54)),  -- нижняя часть карточки (не черная!)
     })
     cardBgGrad.Parent = cardWrapper
 
-    -- Объемная обводка (сверху светлее = блик света на грани, снизу темнее)
-    local cardStroke = addStroke(cardWrapper, Color3.fromRGB(80, 80, 86), 1, 0)
+    -- Объемная обводка (светлый четкий контур)
+    local cardStroke = addStroke(cardWrapper, Color3.fromRGB(95, 95, 105), 1, 0)
     local strokeGrad = Instance.new("UIGradient")
     strokeGrad.Rotation = 90
     strokeGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(96, 96, 104)),  -- верхняя грань (ярче)
-        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(64, 64, 70)),
-        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(42, 42, 46)),   -- нижняя грань (тень)
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(125, 125, 138)), -- верхняя светлая фаска
+        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(90, 90, 98)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(65, 65, 72)),   -- низ обводки
     })
     strokeGrad.Parent = cardStroke
 
