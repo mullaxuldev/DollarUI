@@ -69,6 +69,21 @@ RagebotSec:AddButton({
 })
 ```
 
+## Elements
+- `AddToggle({ Name, Default, Callback, Flag })` — switch element.
+- `AddSlider({ Name, Min, Max, Default, Suffix, Decimals, Callback })` — draggable value slider.
+- `AddDropdown({ Name, Options, Default, Callback })` — single-choice selector.
+- `AddMultiDropdown({ Name, Options, Default, Callback })` — multi-choice selector (returns table).
+- `AddKeybind({ Name, Default, Callback })` — click to rebind, shows key name (Esc cancels).
+- `AddColorPicker({ Name, Default, Callback })` — HSV popup with saturation/value box and hue bar.
+- `AddInput({ Name, Placeholder, Callback })` — text field.
+- `AddButton({ Name, Callback })` — minimalist fingerprint action.
+
+## Window Control
+- **RightShift / Insert** — hide/show menu (glass parts fully removed from camera while hidden).
+- `Library:ToggleUI()` — toggle menu programmatically.
+- `Library:SetToggleKey(Enum.KeyCode.X)` — rebind the menu key.
+
 ## Config Manager API
 - `Library:SaveConfig(name)` — saves current settings to `configs/<name>.json`.
 - `Library:LoadConfig(name)` — loads settings from file or memory.
