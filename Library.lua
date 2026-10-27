@@ -165,7 +165,7 @@ MainWindow.AnchorPoint = Vector2.new(0.5, 0.5)
 MainWindow.BackgroundColor3 = Theme.WindowBg
 MainWindow.BackgroundTransparency = 0.08
 MainWindow.BorderSizePixel = 0
-MainWindow.ClipsDescendants = false
+MainWindow.ClipsDescendants = true
 MainWindow.Parent = ScreenGui
 addCorner(MainWindow, 16)
 
@@ -396,25 +396,36 @@ local function setMenuVisible(vis)
         if DoF and DoF.Parent then
             DoF.Enabled = true
             DoF.NearIntensity = 0
-            TweenService:Create(DoF, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { NearIntensity = 1 }):Play()
+            TweenService:Create(DoF, TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { NearIntensity = 1 }):Play()
         end
 
-        -- Старт снизу экрана: сплюснута в горизонтальную полоску (как засасывает пылесос)
-        MainWindow.Position = UDim2.new(normalPos.X.Scale, normalPos.X.Offset, 1, 100)
-        MainWindow.Size = UDim2.new(0, 420, 0, 20)
-        WindowScale.Scale = 0.5
+        -- НАЧАЛО: Спагеттированное состояние внизу экрана (сильно вытянута по вертикали и узкая по горизонтали)
+        MainWindow.Position = UDim2.new(normalPos.X.Scale, normalPos.X.Offset, 1, 350)
+        MainWindow.Size = UDim2.new(0, 160, 0, 750)
+        WindowScale.Scale = 0.65
 
-        -- Эластичный вылет на центр экрана с восстановлением пропорций
-        local posTween = TweenService:Create(MainWindow, TweenInfo.new(0.42, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        -- ФАЗА 1: Вытягивание вверх из воронки пылесоса
+        local tUp = TweenService:Create(MainWindow, TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Position = UDim2.new(normalPos.X.Scale, normalPos.X.Offset, 0.65, 0),
+            Size = UDim2.new(0, 480, 0, 680),
+        })
+        TweenService:Create(WindowScale, TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Scale = 0.85
+        }):Play()
+        tUp:Play()
+        tUp.Completed:Wait()
+
+        -- ФАЗА 2: Плавный эластичный переход в исходные размеры (распрямление из спагетти)
+        local tSnap = TweenService:Create(MainWindow, TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
             Position = normalPos,
             Size = normalSize
         })
-        local scaleTween = TweenService:Create(WindowScale, TweenInfo.new(0.38, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        TweenService:Create(WindowScale, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Scale = 1
-        })
-        posTween:Play()
-        scaleTween:Play()
-        posTween.Completed:Wait()
+        }):Play()
+        tSnap:Play()
+        tSnap.Completed:Wait()
+
         isToggling = false
     else
         menuOpen = false
@@ -422,26 +433,36 @@ local function setMenuVisible(vis)
             if activePopupClose then activePopupClose() else activePopup.Visible = false end
         end
 
-        -- Плавное незаметное угасание блюра
+        -- Плавное угасание DoF блюра
         if DoF and DoF.Parent then
-            TweenService:Create(DoF, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { NearIntensity = 0 }):Play()
+            TweenService:Create(DoF, TweenInfo.new(0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { NearIntensity = 0 }):Play()
         end
 
-        -- Засасывание пылесосом вниз экрана: сжимается по Y в тонкую полосу, уменьшается по X и улетает вниз
-        local targetY = UDim2.new(MainWindow.Position.X.Scale, MainWindow.Position.X.Offset, 1, 120)
-        local posTween = TweenService:Create(MainWindow, TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-            Position = targetY,
-            Size = UDim2.new(0, 320, 0, 15)
+        -- ФАЗА 1 СПАГЕТТИЗАЦИИ: Меню начинает растягиваться вниз и сжиматься по ширине (гравитация/засасывание воронкой)
+        local tSpag = TweenService:Create(MainWindow, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Position = UDim2.new(MainWindow.Position.X.Scale, MainWindow.Position.X.Offset, 0.72, 0),
+            Size = UDim2.new(0, 420, 0, 720),
         })
-        local scaleTween = TweenService:Create(WindowScale, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Scale = 0.35
+        TweenService:Create(WindowScale, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Scale = 0.85
+        }):Play()
+        tSpag:Play()
+        tSpag.Completed:Wait()
+
+        -- ФАЗА 2 УЛЁТА: Превращение в ультра-узкую спагетти и резкий залет в точку всасывания под экран
+        local dropY = UDim2.new(MainWindow.Position.X.Scale, MainWindow.Position.X.Offset, 1, 400)
+        local tSuck = TweenService:Create(MainWindow, TweenInfo.new(0.26, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
+            Position = dropY,
+            Size = UDim2.new(0, 80, 0, 900),
         })
-        posTween:Play()
-        scaleTween:Play()
-        posTween.Completed:Wait()
+        TweenService:Create(WindowScale, TweenInfo.new(0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Scale = 0.4
+        }):Play()
+        tSuck:Play()
+        tSuck.Completed:Wait()
 
         MainWindow.Visible = false
-        -- Возвращаем исходный размер для следующего открытия
+        -- Возвращаем исходную форму для следующего открытия
         MainWindow.Size = normalSize
         WindowScale.Scale = 1
         if DoF and DoF.Parent then DoF.Enabled = false end
