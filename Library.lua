@@ -162,21 +162,30 @@ MainWindow.Name = "MainWindow"
 MainWindow.Size = UDim2.new(0, 860, 0, 560)
 MainWindow.Position = UDim2.new(0.5, -430, 0.5, -280)
 MainWindow.BackgroundColor3 = Theme.WindowBg
-MainWindow.BackgroundTransparency = 0.04
+MainWindow.BackgroundTransparency = 0.08
 MainWindow.BorderSizePixel = 0
 MainWindow.ClipsDescendants = false
 MainWindow.Parent = ScreenGui
 addCorner(MainWindow, 16)
-addStroke(MainWindow, Theme.StrokeOuter, 1, 0.3)
+
+-- Объемный внешний контур окна с эффектом преломления света на фаске (сверху ярче)
+local mainStroke = addStroke(MainWindow, Theme.StrokeOuter, 1.2, 0.1)
+local mainStrokeGrad = Instance.new("UIGradient")
+mainStrokeGrad.Rotation = 90
+mainStrokeGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(120, 120, 130)), -- верхняя фаска окна со светом
+    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(72, 72, 78)),
+    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(42, 42, 46)),    -- теневой низ
+})
+mainStrokeGrad.Parent = mainStroke
 
 --------------------------------------------------------------------------------
 -- СТЕКЛЯННАЯ ПОДЛОЖКА ТОЛЬКО ПОД ОКНОМ (МНОГОСЛОЙНЫЙ КАСКАД ДЛЯ МАКСИМАЛЬНОЙ КАШИ)
 --------------------------------------------------------------------------------
 local Camera = workspace.CurrentCamera
 
--- В Roblox один стеклянный парт даёт лишь легкое размытие.
--- Настоящая непроглядная "каша" (frosted glass) делается каскадом из 3-4 стекол
--- с микросмещением по Z (от 0.96 до 1.05) перед камерой!
+-- Многослойный каскад стекла + преломления (Glass Refraction)
+-- В Roblox гласс-материал при высоком Graphic Level даёт физическое преломление (хроматика и искажение света по краям)
 local GLASS_LAYERS = 3
 local GlassParts = {}
 
@@ -189,8 +198,8 @@ for i = 1, GLASS_LAYERS do
     p.CanQuery = false
     p.CastShadow = false
     p.Material = Enum.Material.Glass
-    p.Transparency = 0.985
-    p.Color = Color3.fromRGB(240, 240, 245)
+    p.Transparency = 0.965 -- чуть плотнее для выраженного преломления света и размытия
+    p.Color = Color3.fromRGB(245, 245, 252)
     GlassParts[i] = p
 end
 
@@ -205,8 +214,8 @@ for i = 1, 3 do
     p.CanQuery = false
     p.CastShadow = false
     p.Material = Enum.Material.Glass
-    p.Transparency = 0.985
-    p.Color = Color3.fromRGB(240, 240, 245)
+    p.Transparency = 0.965
+    p.Color = Color3.fromRGB(245, 245, 252)
     PopupGlassParts[i] = p
 end
 
@@ -1090,17 +1099,37 @@ local function addBottomLine(parent)
     return line
 end
 
--- СЕКЦИЯ-КАРТОЧКА: большая скругленная карточка с обводкой и фоном, внутри которой лежат заголовок и функции
+-- СЕКЦИЯ-КАРТОЧКА: глубокая объемная карточка со светотенью, верхним бликом и мягкой обводкой
 local function createSectionCard(column, title)
     local cardWrapper = Instance.new("Frame")
     cardWrapper.Size = UDim2.new(1, 0, 0, 0)
     cardWrapper.AutomaticSize = Enum.AutomaticSize.Y
     cardWrapper.BackgroundColor3 = Theme.CardFill
-    cardWrapper.BackgroundTransparency = 0.45
+    cardWrapper.BackgroundTransparency = 0.12
     cardWrapper.LayoutOrder = nextOrder()
     cardWrapper.Parent = column
     addCorner(cardWrapper, 10)
-    addStroke(cardWrapper, Theme.StrokeInner, 1, 0)
+    
+    -- Объемный градиент фона: сверху светлее (падающий свет), снизу глубже/темнее
+    local cardBgGrad = Instance.new("UIGradient")
+    cardBgGrad.Rotation = 90
+    cardBgGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(56, 56, 60)), -- верхний светлый отблеск
+        ColorSequenceKeypoint.new(0.35, Color3.fromRGB(44, 44, 47)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(36, 36, 39)),  -- нижняя теневая часть
+    })
+    cardBgGrad.Parent = cardWrapper
+
+    -- Объемная обводка (сверху светлее = блик света на грани, снизу темнее)
+    local cardStroke = addStroke(cardWrapper, Color3.fromRGB(80, 80, 86), 1, 0)
+    local strokeGrad = Instance.new("UIGradient")
+    strokeGrad.Rotation = 90
+    strokeGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(96, 96, 104)),  -- верхняя грань (ярче)
+        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(64, 64, 70)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(42, 42, 46)),   -- нижняя грань (тень)
+    })
+    strokeGrad.Parent = cardStroke
 
     local cardLayout = Instance.new("UIListLayout")
     cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1176,6 +1205,16 @@ local function addToggle(section, labelText, defaultState, isLast, callback, fla
     pill.AutoButtonColor = false
     pill.Parent = row
     addCorner(pill, 10)
+
+    -- Объемная обводка тумблера со светотенью
+    local pillStroke = addStroke(pill, Color3.fromRGB(75, 75, 82), 1, 0)
+    local pillStrokeGrad = Instance.new("UIGradient")
+    pillStrokeGrad.Rotation = 90
+    pillStrokeGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(110, 110, 118)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(46, 46, 52)),
+    })
+    pillStrokeGrad.Parent = pillStroke
 
     local knob = Instance.new("Frame")
     knob.AnchorPoint = Vector2.new(0, 0.5)
