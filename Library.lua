@@ -213,6 +213,9 @@ end
 local activePopup = nil
 local activePopupClose = nil
 
+local Library = {}
+Library.Registry = {}
+
 -- DoF настроен на максимальное размытие передней плоскости:
 local DoF = trackInst(Instance.new("DepthOfFieldEffect"))
 DoF.Name = "DollarhackDoF"
@@ -587,8 +590,6 @@ local navConfig = {
 local navMap = {}
 local HeaderTitle
 local TabPages = {}
-local Library = {}
-Library.Registry = {}
 local currentTabId = "rage"
 local WeaponBar
 local ChevronBtn, ChevronIcon
