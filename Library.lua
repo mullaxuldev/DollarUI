@@ -2371,26 +2371,86 @@ Library.ConfigFolder = "configs"
 Library.AutoLoadFile = "configs/autoload.txt"
 Library.Unload = Cleanup
 
-function SectionCardMeta:AddToggle(config)
-    local label = config.Name or config.label or "Toggle"
-    local default = config.Default ~= nil and config.Default or false
-    local isLast = config.IsLast or false
-    local callback = config.Callback or function() end
-    local flag = config.Flag or config.flag or label
-    return addToggle(self.Container, label, default, isLast, callback, flag)
+local function parseArgs(arg1, arg2)
+    local flag, cfg
+    if type(arg1) == "string" and type(arg2) == "table" then
+        flag = arg1
+        cfg = arg2
+    elseif type(arg1) == "table" then
+        cfg = arg1
+        flag = cfg.Flag or cfg.flag or cfg.Name or cfg.Text
+    else
+        cfg = arg2 or {}
+        flag = tostring(arg1 or "Item")
+    end
+    local name = cfg.Name or cfg.Text or flag
+    return flag, name, cfg
 end
 
-function SectionCardMeta:AddSlider(config)
-    local label = config.Name or config.label or "Slider"
-    local min = config.Min or 0
-    local max = config.Max or 100
-    local default = config.Default or min
-    local suffix = config.Suffix or ""
-    local decimals = config.Decimals or 0
-    local isLast = config.IsLast or false
-    local callback = config.Callback or function() end
-    local flag = config.Flag or config.flag or label
-    return addSlider(self.Container, label, min, max, default, suffix, decimals, isLast, callback, flag)
+function SectionCardMeta:AddToggle(arg1, arg2)
+    local flag, label, cfg = parseArgs(arg1, arg2)
+    local default = (cfg.Default ~= nil) and cfg.Default or false
+    local isLast = cfg.IsLast or false
+    local callback = cfg.Callback or function() end
+
+    local item = addToggle(self.Container, label, default, isLast, callback, flag)
+    local tObj = {
+        Value = default,
+        Type = "Toggle",
+        Callback = callback
+    }
+    function tObj:SetValue(v)
+        self.Value = v
+        if item and item.Set then item.Set(v) end
+    end
+    function tObj:OnChanged(fn)
+        local oldCb = self.Callback
+        self.Callback = function(val)
+            pcall(oldCb, val)
+            pcall(fn, val)
+        end
+    end
+    function tObj:AddColorPicker(cpArg1, cpArg2)
+        return self:AddColorPicker(cpArg1, cpArg2)
+    end
+    function tObj:AddKeyPicker(kpArg1, kpArg2)
+        return self:AddKeyPicker(kpArg1, kpArg2)
+    end
+
+    if getgenv().Toggles then getgenv().Toggles[flag] = tObj end
+    return tObj
+end
+
+function SectionCardMeta:AddSlider(arg1, arg2)
+    local flag, label, cfg = parseArgs(arg1, arg2)
+    local min = cfg.Min or 0
+    local max = cfg.Max or 100
+    local default = cfg.Default or min
+    local suffix = cfg.Suffix or ""
+    local decimals = cfg.Decimals or cfg.Rounding or 0
+    local isLast = cfg.IsLast or false
+    local callback = cfg.Callback or function() end
+
+    local item = addSlider(self.Container, label, min, max, default, suffix, decimals, isLast, callback, flag)
+    local sObj = {
+        Value = default,
+        Type = "Slider",
+        Callback = callback
+    }
+    function sObj:SetValue(v)
+        self.Value = v
+        if item and item.Set then item.Set(v) end
+    end
+    function sObj:OnChanged(fn)
+        local oldCb = self.Callback
+        self.Callback = function(val)
+            pcall(oldCb, val)
+            pcall(fn, val)
+        end
+    end
+
+    if getgenv().Options then getgenv().Options[flag] = sObj end
+    return sObj
 end
 
 function SectionCardMeta:AddInput(config)
@@ -2403,22 +2463,105 @@ function SectionCardMeta:AddInput(config)
     return addInput(self.Container, label, default, placeholder, isLast, callback, flag)
 end
 
-function SectionCardMeta:AddKeybind(config)
-    local label = config.Name or config.label or "Keybind"
-    local defaultKey = config.Default or config.Key or Enum.KeyCode.None
-    local isLast = config.IsLast or false
-    local callback = config.Callback or function() end
-    local flag = config.Flag or config.flag or label
-    return addKeybind(self.Container, label, defaultKey, isLast, callback, flag)
+function SectionCardMeta:AddKeybind(arg1, arg2)
+    local flag, label, cfg = parseArgs(arg1, arg2)
+    local defaultKey = cfg.Default or cfg.Key or Enum.KeyCode.None
+    local isLast = cfg.IsLast or false
+    local callback = cfg.Callback or function() end
+
+    local item = addKeybind(self.Container, label, defaultKey, isLast, callback, flag)
+    local kObj = {
+        Value = defaultKey,
+        Type = "Keybind",
+        Callback = callback
+    }
+    function kObj:SetValue(k)
+        self.Value = k
+        if item and item.Set then item.Set(k) end
+    end
+    function kObj:OnClick(fn)
+        self.Callback = fn
+    end
+
+    if getgenv().Options then getgenv().Options[flag] = kObj end
+    return kObj
 end
 
-function SectionCardMeta:AddColorPicker(config)
-    local label = config.Name or config.label or "Color"
-    local defaultColor = config.Default or config.Color or Color3.fromRGB(255, 255, 255)
-    local isLast = config.IsLast or false
-    local callback = config.Callback or function() end
-    local flag = config.Flag or config.flag or label
-    return addColorPicker(self.Container, label, defaultColor, isLast, callback, flag)
+SectionCardMeta.AddKeyPicker = SectionCardMeta.AddKeybind
+
+function SectionCardMeta:AddLabel(arg1, arg2)
+    local flag, label, cfg = parseArgs(arg1, arg2)
+    local selfSec = self
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, 0, 0, 32)
+    row.BackgroundTransparency = 1
+    row.LayoutOrder = nextOrder()
+    row.Parent = self.Container
+
+    local lbl = Instance.new("TextLabel")
+    lbl.RichText = true
+    lbl.AnchorPoint = Vector2.new(0, 0.5)
+    lbl.Size = UDim2.new(1, -28, 0, 20)
+    lbl.Position = UDim2.new(0, 14, 0.5, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = tostring(cfg.Text or label or "")
+    lbl.FontFace = Font.fromName("Montserrat", Enum.FontWeight.SemiBold)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 14
+    lbl.TextColor3 = Theme.TextGray
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = row
+
+    local lObj = { Text = lbl.Text }
+    function lObj:SetText(t)
+        self.Text = tostring(t)
+        lbl.Text = tostring(t)
+    end
+    function lObj:AddColorPicker(cpArg1, cpArg2)
+        local cpFlag, cpLabel, cpCfg = parseArgs(cpArg1, cpArg2)
+        cpCfg.Text = cpCfg.Text or label
+        return selfSec:AddColorPicker(cpFlag, cpCfg)
+    end
+    function lObj:AddKeyPicker(kpArg1, kpArg2)
+        local kpFlag, kpLabel, kpCfg = parseArgs(kpArg1, kpArg2)
+        kpCfg.Text = kpCfg.Text or label
+        return selfSec:AddKeybind(kpFlag, kpCfg)
+    end
+
+    if getgenv().Options then getgenv().Options[flag] = lObj end
+    return lObj
+end
+
+function SectionCardMeta:AddDivider()
+    -- Декоративный разделитель внутри карточки
+end
+
+function SectionCardMeta:AddColorPicker(arg1, arg2)
+    local flag, label, cfg = parseArgs(arg1, arg2)
+    local defaultColor = cfg.Default or cfg.Color or Color3.fromRGB(255, 255, 255)
+    local isLast = cfg.IsLast or false
+    local callback = cfg.Callback or function() end
+
+    local item = addColorPicker(self.Container, label, defaultColor, isLast, callback, flag)
+    local cObj = {
+        Value = defaultColor,
+        Type = "ColorPicker",
+        Callback = callback
+    }
+    function cObj:SetValue(col)
+        self.Value = col
+        if item and item.Set then item.Set(col) end
+    end
+    function cObj:OnChanged(fn)
+        local oldCb = self.Callback
+        self.Callback = function(val)
+            pcall(oldCb, val)
+            pcall(fn, val)
+        end
+    end
+
+    if getgenv().Options then getgenv().Options[flag] = cObj end
+    return cObj
 end
 
 function SectionCardMeta:AddMultiDropdown(config)
@@ -2439,16 +2582,54 @@ function SectionCardMeta:AddButton(config)
     return addButton(self.Container, label, "", icon, isLast, callback)
 end
 
-function SectionCardMeta:AddDropdown(config)
-    local label = config.Name or config.label or "Dropdown"
-    local options = config.Options or {}
-    local default = config.Default or options[1] or ""
-    local hasGear = config.HasGear or false
-    local openByDefault = config.Open or false
-    local isLast = config.IsLast or false
-    local callback = config.Callback or function() end
-    local flag = config.Flag or config.flag or label
-    return addDropdown(self.Container, label, options, default, hasGear, openByDefault, isLast, callback, flag)
+function SectionCardMeta:AddDropdown(arg1, arg2)
+    local flag, label, cfg = parseArgs(arg1, arg2)
+    local options = cfg.Options or cfg.Values or {}
+    local multi = cfg.Multi or false
+    local isLast = cfg.IsLast or false
+    local callback = cfg.Callback or function() end
+
+    local dObj = {
+        Type = multi and "MultiDropdown" or "Dropdown",
+        Values = options,
+        Callback = callback
+    }
+
+    local item
+    if multi then
+        local def = type(cfg.Default) == "table" and cfg.Default or (cfg.Default and { cfg.Default } or {})
+        dObj.Value = def
+        item = addMultiDropdown(self.Container, label, options, def, isLast, function(l)
+            dObj.Value = l
+            pcall(callback, l)
+        end, flag)
+    else
+        local def = type(cfg.Default) == "string" and cfg.Default or (options[1] or "")
+        dObj.Value = def
+        item = addDropdown(self.Container, label, options, def, cfg.HasGear or false, cfg.Open or false, isLast, function(v)
+            dObj.Value = v
+            pcall(callback, v)
+        end, flag)
+    end
+
+    function dObj:SetValue(v)
+        self.Value = v
+        if item and item.Set then item.Set(v) end
+    end
+    function dObj:SetValues(newVals)
+        self.Values = newVals
+        if item and item.Refresh then item.Refresh(newVals, self.Value) end
+    end
+    function dObj:OnChanged(fn)
+        local oldCb = self.Callback
+        self.Callback = function(val)
+            pcall(oldCb, val)
+            pcall(fn, val)
+        end
+    end
+
+    if getgenv().Options then getgenv().Options[flag] = dObj end
+    return dObj
 end
 
 function TabMeta:CreateSection(columnSide, title)
