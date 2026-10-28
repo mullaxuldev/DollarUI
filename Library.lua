@@ -352,6 +352,10 @@ OverlayLayer.Parent = MainWindow
 
 -- Ультраплавное перетаскивание окна (120+ FPS критический демпфер / Exponential Smoothing)
 local dragging = false
+local menuAnimating = false
+local menuOpen = true
+local toggleKey = Enum.KeyCode.RightShift
+local isToggling = false
 local dragMouseStart = Vector2.zero
 local dragWinStart = Vector2.zero
 local currentDragOffset = Vector2.zero
@@ -379,6 +383,7 @@ end))
 
 -- Частото-независимая интерполяция 120 FPS (критическое сглаживание без задержек и ступенек)
 trackConn(RunService.RenderStepped:Connect(function(dt)
+    if menuAnimating then return end -- не дергаем позицию во время анимации открытия/закрытия
     if dragging then
         local mousePos = UserInputService:GetMouseLocation()
         local topInset = GuiService:GetGuiInset()
@@ -401,86 +406,81 @@ local function setMenuVisible(vis)
     if isToggling then return end
     if vis == menuOpen then return end
     isToggling = true
+    menuAnimating = true
+
+    -- Страховка: через 1.5с флаги сбрасываются в любом случае (защита от зависания)
+    task.delay(1.5, function()
+        isToggling = false
+        menuAnimating = false
+    end)
+
+    if activePopup then
+        if activePopupClose then activePopupClose() else activePopup.Visible = false end
+    end
 
     if vis then
         menuOpen = true
         MainWindow.Visible = true
+
+        -- Стартовое состояние: сплющенная воронка внизу экрана
+        MainWindow.Position = UDim2.new(normalPos.X.Scale, normalPos.X.Offset, 1.2, normalPos.Y.Offset)
+        MainWindow.Size = UDim2.new(0, normalSize.X.Offset * 0.3, 0, normalSize.Y.Offset * 0.2)
+        WindowScale.Scale = 0.4
+
         if DoF and DoF.Parent then
             DoF.Enabled = true
             DoF.NearIntensity = 0
             TweenService:Create(DoF, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { NearIntensity = 1 }):Play()
         end
 
-        local startT = tick()
-        local duration = 0.38
-        while true do
-            local elapsed = tick() - startT
-            local alpha = math.clamp(elapsed / duration, 0, 1)
-            -- Эластичная интерполяция OutBack
-            local t = alpha - 1
-            local ease = (t * t * ((1.70158 + 1) * t + 1.70158) + 1)
-
-            -- Воронка: снизу узкое горлышко (pinch), раскрывающееся в нормальный прямоугольник
-            local currentScale = 0.4 + 0.6 * ease
-            WindowScale.Scale = currentScale
-
-            -- Позиция поднимается снизу
-            local curY = 1.2 - 0.7 * ease
-            MainWindow.Position = UDim2.new(normalPos.X.Scale, normalPos.X.Offset, curY, normalPos.Y.Offset)
-
-            -- Пропорции: от сплющенной воронки к нормальным размерам
-            local curW = normalSize.X.Offset * (0.3 + 0.7 * ease)
-            local curH = normalSize.Y.Offset * (0.2 + 0.8 * ease)
-            MainWindow.Size = UDim2.new(0, curW, 0, curH)
-
-            if alpha >= 1 then break end
-            RunService.RenderStepped:Wait()
-        end
-
-        MainWindow.Position = normalPos
-        MainWindow.Size = normalSize
-        WindowScale.Scale = 1
-        isToggling = false
+        -- Эластичный вылет воронки на место (Back Out)
+        local posTween = TweenService:Create(MainWindow, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Position = normalPos,
+            Size = normalSize
+        })
+        local scaleTween = TweenService:Create(WindowScale, TweenInfo.new(0.36, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Scale = 1
+        })
+        posTween.Completed:Connect(function()
+            pcall(function()
+                MainWindow.Position = normalPos
+                MainWindow.Size = normalSize
+                WindowScale.Scale = 1
+                menuAnimating = false
+                isToggling = false
+            end)
+        end)
+        scaleTween:Play()
+        posTween:Play()
     else
         menuOpen = false
-        if activePopup then
-            if activePopupClose then activePopupClose() else activePopup.Visible = false end
-        end
 
         if DoF and DoF.Parent then
             TweenService:Create(DoF, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { NearIntensity = 0 }):Play()
         end
 
-        local startT = tick()
-        local duration = 0.34
-        local originPos = MainWindow.Position
-        while true do
-            local elapsed = tick() - startT
-            local alpha = math.clamp(elapsed / duration, 0, 1)
-            -- Ускоряющаяся интерполяция InCubic / InExpo (эффект черной дыры / пылесоса)
-            local ease = alpha * alpha * alpha
-
-            -- ВОРОНКА: по мере затягивания вниз ширина сжимается в конус/воронку в разы быстрее, чем высота
-            local curW = normalSize.X.Offset * (1 - ease * 0.92)  -- сжимается до 8% от ширины (острие воронки)
-            local curH = normalSize.Y.Offset * (1 - ease * 0.75)  -- высота утягивается следом
-            local curScale = 1 - ease * 0.65
-
-            -- Центр масс смещается резко вниз к точке всасывания
-            local curY = originPos.Y.Scale + (1.25 - originPos.Y.Scale) * ease
-            MainWindow.Position = UDim2.new(originPos.X.Scale, originPos.X.Offset, curY, originPos.Y.Offset)
-            MainWindow.Size = UDim2.new(0, math.max(10, curW), 0, math.max(10, curH))
-            WindowScale.Scale = math.max(0.05, curScale)
-
-            if alpha >= 1 then break end
-            RunService.RenderStepped:Wait()
-        end
-
-        MainWindow.Visible = false
-        MainWindow.Position = normalPos
-        MainWindow.Size = normalSize
-        WindowScale.Scale = 1
-        if DoF and DoF.Parent then DoF.Enabled = false end
-        isToggling = false
+        -- Засасывание пылесосом: воронка вниз экрана + сужение
+        local dropPos = UDim2.new(normalPos.X.Scale, normalPos.X.Offset, 1.25, normalPos.Y.Offset)
+        local posTween = TweenService:Create(MainWindow, TweenInfo.new(0.32, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Position = dropPos,
+            Size = UDim2.new(0, 10, 0, 10)
+        })
+        local scaleTween = TweenService:Create(WindowScale, TweenInfo.new(0.32, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Scale = 0.05
+        })
+        posTween.Completed:Connect(function()
+            pcall(function()
+                MainWindow.Visible = false
+                MainWindow.Position = normalPos
+                MainWindow.Size = normalSize
+                WindowScale.Scale = 1
+                if DoF and DoF.Parent then DoF.Enabled = false end
+                menuAnimating = false
+                isToggling = false
+            end)
+        end)
+        scaleTween:Play()
+        posTween:Play()
     end
 end
 
@@ -500,7 +500,7 @@ trackConn(UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if Library._KeybindListening then return end
     if input.KeyCode == toggleKey or input.KeyCode == Enum.KeyCode.Insert then
-        Library:ToggleUI()
+        pcall(function() Library:ToggleUI() end)
     end
 end))
 
